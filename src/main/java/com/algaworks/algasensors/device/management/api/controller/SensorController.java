@@ -1,7 +1,9 @@
 package com.algaworks.algasensors.device.management.api.controller;
 
 import com.algaworks.algasensors.device.management.api.client.SensorMonitoringClient;
+import com.algaworks.algasensors.device.management.api.model.SensorDetailOutput;
 import com.algaworks.algasensors.device.management.api.model.SensorInput;
+import com.algaworks.algasensors.device.management.api.model.SensorMonitoringOutput;
 import com.algaworks.algasensors.device.management.api.model.SensorOutput;
 import com.algaworks.algasensors.device.management.common.IdGenerator;
 import com.algaworks.algasensors.device.management.domain.model.Sensor;
@@ -35,7 +37,7 @@ public class SensorController {
 
         Page<Sensor> sensors = repository.findAll(pageable);
 
-        return sensors.map(sensor -> getSensorOutput(sensor));
+        return sensors.map(sensor -> convertToModel(sensor));
     }
 
 
@@ -55,14 +57,14 @@ public class SensorController {
 
         Sensor sensor1 = repository.save(sensor);
 
-        return getSensorOutput(sensor1);
+        return convertToModel(sensor1);
 
 
     }
 
     @GetMapping("{sensorId}")
     @ResponseStatus(HttpStatus.OK)
-    public SensorOutput consultar(@PathVariable TSID sensorId){
+    public SensorOutput getOne(@PathVariable TSID sensorId){
 
 
         LOGGER.info("sensorId passado " + sensorId);
@@ -72,7 +74,27 @@ public class SensorController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
 
-        return getSensorOutput(sensor);
+        return convertToModel(sensor);
+
+    }
+
+    /*
+    Metodo traz os detalhes do monotiramento
+     */
+    @GetMapping("{sensorId}/detail")
+    @ResponseStatus(HttpStatus.OK)
+    public SensorDetailOutput getOneWithDetail(@PathVariable TSID sensorId){
+
+        Sensor sensor = repository.findById(new SensorId(sensorId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        SensorMonitoringOutput monitoringOutput = sensorMonitoringClient.getDetail(sensorId);
+        SensorOutput sensorOutput = convertToModel(sensor);
+
+        return SensorDetailOutput.builder()
+                .monitoring(monitoringOutput)
+                .sensor(sensorOutput)
+                .build();
 
     }
 
@@ -112,7 +134,7 @@ public class SensorController {
 
 //        Sensor sensorAlterado = repository.save(sensor);
 
-        return getSensorOutput(sensor);
+        return convertToModel(sensor);
     }
 
     @PutMapping("{sensorId}/enable")
@@ -127,7 +149,7 @@ public class SensorController {
 
         repository.save(sensor);
 
-        sensorMonitoringClient.enablMonitoring(sensorId);
+        sensorMonitoringClient.enableMonitoring(sensorId);
 
 
     }
@@ -149,7 +171,7 @@ public class SensorController {
 
     }
 
-    private SensorOutput getSensorOutput(Sensor sensor) {
+    private SensorOutput convertToModel(Sensor sensor) {
         SensorOutput sensorOutput = SensorOutput.builder()
                 .id(sensor.getId().getValue())
                 .name(sensor.getName())

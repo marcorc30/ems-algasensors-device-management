@@ -3,6 +3,7 @@ package com.algaworks.algasensors.device.management.api.client.impl;
 import com.algaworks.algasensors.device.management.api.client.RestClientFactory;
 import com.algaworks.algasensors.device.management.api.client.SensorMonitoringClient;
 import com.algaworks.algasensors.device.management.api.client.SensorMonitoringClientBadGatewayException;
+import com.algaworks.algasensors.device.management.api.model.SensorMonitoringOutput;
 import io.hypersistence.tsid.TSID;
 import org.hibernate.annotations.Comment;
 import org.springframework.http.HttpStatusCode;
@@ -13,7 +14,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 
-@Component
+//@Component
 public class SensorMonitoringClienteImpl implements SensorMonitoringClient {
 //    para criar um RestClient podemos instanciar diretamente um RestClient create passando a url
 //    private final RestClient restClient = RestClient.create("http://localhost:8082");
@@ -29,7 +30,7 @@ public class SensorMonitoringClienteImpl implements SensorMonitoringClient {
 
 
     @Override
-    public void enablMonitoring(TSID sensorId) {
+    public void enableMonitoring(TSID sensorId) {
         this.restClient.put()
                 .uri("/api/sensors/{sensorId}/monitoring/enable", sensorId)
                 .retrieve()
@@ -43,6 +44,16 @@ public class SensorMonitoringClienteImpl implements SensorMonitoringClient {
                 .uri("/api/sensors/{sensorId}/monitoring/enable", sensorId)
                 .retrieve()
                 .toBodilessEntity();
+
+    }
+
+    @Override
+    public SensorMonitoringOutput getDetail(TSID sensorId) {
+        return this.restClient.get()
+                .uri("/api/sensors/{sensorId}/monitoring", sensorId)
+                .retrieve()
+                .body(SensorMonitoringOutput.class);
+
 
     }
 }
